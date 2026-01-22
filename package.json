@@ -1,0 +1,56 @@
+{
+  "name": "@foldset/cloudflare",
+  "version": "0.0.3",
+  "description": "Cloudflare Workers middleware for monetizing AI traffic using the x402 payment protocol",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/foldset/cloudflare.git"
+  },
+  "homepage": "https://github.com/foldset/cloudflare#readme",
+  "bugs": {
+    "url": "https://github.com/foldset/cloudflare/issues"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "x402",
+    "micropayments",
+    "ai",
+    "monetization",
+    "hono"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./hono": {
+      "types": "./dist/hono.d.ts",
+      "default": "./dist/hono.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "typegen": "wrangler types --path types/worker-configuration.d.ts",
+    "build": "tsc -p tsconfig.json --noEmit false --outDir dist --rootDir src"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20260117.0",
+    "@sentry/cloudflare": "^10.34.0",
+    "@x402/core": "^2.2.0",
+    "@x402/evm": "^2.2.0",
+    "@x402/hono": "^2.2.0",
+    "@x402/svm": "^2.2.0",
+    "hono": "^4.11.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "wrangler": "^4.59.1"
+  }
+}
