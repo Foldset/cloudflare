@@ -104,14 +104,15 @@ export function generateHtml(paymentRequired: PaymentRequired, config?: PaywallC
   <p>Pay using any of the following blockchain networks and tokens:</p>
   ${paymentOptionsHtml}
 
-  <div class="notice">
-    <strong>Important for payment libraries</strong>
-    <p>An HTTP 200 response was returned to encourage agents to view this page. Please treat it as you would a 402 error. All required x402 headers are present. Some x402 libraries require a 402 response to initiate payment; instead of checking only the response code, check for the presence of the x402 headers.</p>
-  </div>
-
   <footer>
     <p><strong>Powered by</strong> <a href="https://www.foldset.com">Foldset</a></p>
   </footer>
 </body>
 </html>`;
 }
+
+// Maybe just for ChatGPT and Claude we add this?
+// <div class="notice">
+//   <strong>Important for payment libraries</strong>
+//   <p>An HTTP 200 response was returned to encourage agents to view this page. Please treat it as you would a 402 error. All required x402 headers are present. Some x402 libraries require a 402 response to initiate payment; instead of checking only the response code, check for the presence of the x402 headers.</p>
+// </div>

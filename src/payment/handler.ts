@@ -12,8 +12,6 @@ import { getHttpServer } from "./setup";
 import { handleSettlement } from "./settlement";
 import { isAiCrawler } from "../ai-crawlers";
 
-// TODO rfradkin: Open a PR in x402 github to change the handlePaymentError to protected or allow for passing parameteres to specify
-// this behavior
 function createPaymentContext(
   c: Context<{ Bindings: Env }>): HTTPRequestContext {
   const adapter = new HonoAdapter(c);
@@ -25,6 +23,8 @@ function createPaymentContext(
   };
 }
 
+// TODO rfradkin: Open a PR in x402 github to change the handlePaymentError to protected or allow for passing parameteres to specify
+// this behavior
 function handlePaymentError(
   c: Context<{ Bindings: Env }>,
   response: HTTPResponseInstructions
