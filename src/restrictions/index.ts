@@ -1,13 +1,7 @@
 import type { Context } from "hono";
 import type { Env } from "../types";
 
-export interface Restriction {
-  host: string;
-  path: string;
-  description: string;
-  price: number;
-  scheme: string;
-}
+import type { Restriction } from "@foldset/core";
 
 const CACHE_TTL_MS = 30_000;
 

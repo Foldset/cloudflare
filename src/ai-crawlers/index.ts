@@ -1,9 +1,7 @@
 import type { Context } from "hono";
 import type { Env } from "../types";
 
-export interface AiCrawler {
-  user_agent: string;
-}
+import type { AiCrawler } from "@foldset/core";
 
 const CACHE_TTL_MS = 30_000;
 

@@ -1,46 +1,13 @@
 import type { Context } from "hono";
 
 import type { Env } from "../types";
-import { type Restriction, storeRestrictions } from "../restrictions";
-import { type PaymentMethod, storePaymentMethods } from "../payment-methods";
-import { type AiCrawler, storeAiCrawlers } from "../ai-crawlers";
-import { type FacilitatorConfig, storeFacilitator } from "../facilitators";
+import type { Restriction, PaymentMethod, AiCrawler, FacilitatorConfig, FoldsetWebhook } from "@foldset/core";
+import { verifySignature } from "@foldset/core";
+import { storeRestrictions } from "../restrictions";
+import { storePaymentMethods } from "../payment-methods";
+import { storeAiCrawlers } from "../ai-crawlers";
+import { storeFacilitator } from "../facilitators";
 
-export type FoldsetWebhook =
-  | { event_type: "restrictions"; event_object: Restriction[] }
-  | { event_type: "payment-methods"; event_object: PaymentMethod[] }
-  | { event_type: "ai-crawlers"; event_object: AiCrawler[] }
-  | { event_type: "facilitator"; event_object: FacilitatorConfig };
-
-async function verifySignature(body: string, signature: string, apiKey: string): Promise<boolean> {
-  const encoder = new TextEncoder();
-
-  const keyHashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(apiKey));
-  const hashedKeyHex = Array.from(new Uint8Array(keyHashBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  const hmacKey = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(hashedKeyHex),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-
-  const expectedSig = await crypto.subtle.sign("HMAC", hmacKey, encoder.encode(body));
-  const expectedHex = Array.from(new Uint8Array(expectedSig))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  // Timing-safe comparison
-  if (signature.length !== expectedHex.length) return false;
-  let result = 0;
-  for (let i = 0; i < signature.length; i++) {
-    result |= signature.charCodeAt(i) ^ expectedHex.charCodeAt(i);
-  }
-  return result === 0;
-}
 
 export async function handleWebhook(c: Context<{ Bindings: Env }>): Promise<Response> {
   const signature = c.req.header("X-Foldset-Signature");

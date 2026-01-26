@@ -9,14 +9,14 @@ import { registerExactSvmScheme } from "@x402/svm/exact/server";
 import type { UnpaidResponseResult, HTTPResponseInstructions } from "@x402/core/http";
 
 import type { Env } from "../types";
-import { type Restriction, getRestrictions } from "../restrictions";
-import { type PaymentMethod, getPaymentMethods } from "../payment-methods";
-import { buildRoutesConfig } from "./routes";
+import type { Restriction, PaymentMethod } from "@foldset/core";
+import { buildRoutesConfig, generatePaywallHtml } from "@foldset/core";
+import { getRestrictions } from "../restrictions";
+import { getPaymentMethods } from "../payment-methods";
 import { getFacilitator } from "../facilitators";
-import { generateHtml } from "./paywall";
 
 const paywallProvider: PaywallProvider = {
-  generateHtml
+  generateHtml: generatePaywallHtml
 };
 
 let cachedHttpServer: x402HTTPResourceServer | null = null;

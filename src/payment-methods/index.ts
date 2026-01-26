@@ -1,15 +1,7 @@
 import type { Context } from "hono";
 import type { Env } from "../types";
 
-export interface PaymentMethod {
-  caip2_id: string;
-  decimals: number;
-  contract_address: string;
-  circle_wallet_address: string;
-  extra?: Record<string, string>;
-  chain_display_name: string;
-  asset_display_name: string;
-}
+import type { PaymentMethod } from "@foldset/core";
 
 const CACHE_TTL_MS = 30_000;
 

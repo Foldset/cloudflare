@@ -2,12 +2,7 @@ import type { Context } from "hono";
 import type { Env } from "../types";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 
-export interface FacilitatorConfig {
-  url: string;
-  verifyHeaders?: Record<string, string>;
-  settleHeaders?: Record<string, string>;
-  supportedHeaders?: Record<string, string>;
-}
+import type { FacilitatorConfig } from "@foldset/core";
 
 const CACHE_TTL_MS = 30_000;
 

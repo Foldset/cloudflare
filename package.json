@@ -30,6 +30,7 @@
     "prepare": "npm run build"
   },
   "dependencies": {
+    "@foldset/core": "github:foldset/core",
     "@x402/core": "^2.2.0",
     "@x402/evm": "^2.2.0",
     "@x402/hono": "^2.2.0",
