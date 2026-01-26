@@ -33,16 +33,11 @@
     "@x402/core": "^2.2.0",
     "@x402/evm": "^2.2.0",
     "@x402/hono": "^2.2.0",
-    "@x402/svm": "^2.2.0"
+    "@x402/svm": "^2.2.0",
+    "@sentry/cloudflare": ">=10"
   },
   "peerDependencies": {
-    "@sentry/cloudflare": ">=10",
     "hono": "^4.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@sentry/cloudflare": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260117.0",
