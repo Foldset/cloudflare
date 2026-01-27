@@ -1,12 +1,8 @@
 {
   "name": "@foldset/cloudflare",
-  "version": "0.0.4",
-  "description": "Cloudflare Workers middleware for monetizing AI traffic using the x402 payment protocol",
+  "version": "0.0.1",
+  "description": "Cloudflare Workers implementation for Foldset x402 payment protection",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/foldset/cloudflare.git"
-  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,9 +28,7 @@
   "dependencies": {
     "@foldset/core": "github:foldset/core",
     "@x402/core": "^2.2.0",
-    "@x402/evm": "^2.2.0",
     "@x402/hono": "^2.2.0",
-    "@x402/svm": "^2.2.0",
     "@sentry/cloudflare": ">=10"
   },
   "peerDependencies": {

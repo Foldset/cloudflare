@@ -1,154 +1,93 @@
-import { HTTPRequestContext } from "@x402/core/server";
-import type { HTTPResponseInstructions } from "@x402/core/http";
 import type { Context } from "hono";
-import * as Sentry from "@sentry/cloudflare";
+import {
+  handlePaymentRequest,
+  handleSettlement,
+  handleWebhookRequest,
+} from "@foldset/core";
 
 import type { Env } from "../types";
-import { handleWebhook } from "../webhooks";
-import { logVisitEvent } from "../telemetry/logging";
-import { wrappedPaymentHandler } from "../telemetry/sentry";
+import { getWorkerCore } from "../core";
 import { HonoAdapter } from "./adapter";
-import { getHttpServer } from "./setup";
-import { handleSettlement } from "./settlement";
-import { isAiCrawler } from "../ai-crawlers";
+import { wrappedPaymentHandler } from "../telemetry/sentry";
 
-function createPaymentContext(
-  c: Context<{ Bindings: Env }>): HTTPRequestContext {
-  const adapter = new HonoAdapter(c);
-  return {
-    adapter,
-    path: c.req.path,
-    method: c.req.method,
-    paymentHeader: adapter.getHeader("PAYMENT-SIGNATURE") || adapter.getHeader("X-PAYMENT"),
-  };
-}
-
-// TODO rfradkin: Open a PR in x402 github to change the handlePaymentError to protected or allow for passing parameteres to specify
-// this behavior
-function handlePaymentError(
+async function paymentHandlerHelper(
   c: Context<{ Bindings: Env }>,
-  response: HTTPResponseInstructions
-): Response {
-  Object.entries(response.headers).forEach(([key, value]) => {
-    c.header(key, value);
-  });
-
-  // We always return a 200 even though the status code is 402
-  // AI crawlers tend to view the raw html only if a 200 is returned
-  // For now, we will return 200 errors while blocking the content even though 
-  // we should be returning response.status as 402 here 
-  // We also provide the headers and html to everyone, regardless of web browser status
-
-  // ok just 402 for now
-  return c.html(response.body as string, response.status as 402);
-  // if (response.isHtml) {
-  //   return c.html(response.body as string, response.status as 402));
-  // }
-  // return c.json(response.body || {}, response.status as 402);
-}
-
-async function paymentHandlerHelper(c: Context<{ Bindings: Env }>): Promise<Response> {
-  if (!c.env.FOLDSET_API_KEY) {
-    throw new Error("Missing required environment variable: FOLDSET_API_KEY. See https://docs.foldset.com/setup");
-  }
-  if (!c.env.FOLDSET_CONFIG) {
-    throw new Error("Missing required KV namespace binding: FOLDSET_CONFIG. See https://docs.foldset.com/setup");
-  }
-
-  Sentry.setTag("url", c.req.url);
-  Sentry.setTag("path", c.req.path);
-  Sentry.setTag("method", c.req.method);
+): Promise<Response> {
+  const core = getWorkerCore(c);
+  const adapter = new HonoAdapter(c);
 
   if (c.req.method === "POST" && c.req.path === "/foldset/webhooks") {
-    return handleWebhook(c);
+    const result = await handleWebhookRequest(
+      core,
+      adapter,
+      await c.req.text(),
+    );
+    return new Response(result.body, { status: result.status });
   }
 
-  if (!(await isAiCrawler(c))) {
-    return await fetch(c.req.raw);
-  }
-
-  const httpServer = await getHttpServer(c);
-
+  const httpServer = await core.httpServer.get();
   if (!httpServer) {
-    return await fetch(c.req.raw);
+    return fetch(c.req.raw);
   }
 
-  const context = createPaymentContext(c);
-
-  if (!httpServer.requiresPayment(context)) {
-    return await fetch(c.req.raw);
-  }
-
-  console.log("=== CLOUDFLARE PAYMENT HANDLER ===");
-  console.log("Path:", c.req.path);
-  console.log("Has payment header:", !!context.paymentHeader);
-  console.log("Raw payment header:", context.paymentHeader);
-
-  // Decode and log the payment header content
-  if (context.paymentHeader) {
-    try {
-      const decoded = JSON.parse(atob(context.paymentHeader));
-      console.log("Decoded payment header:", JSON.stringify(decoded, null, 2));
-    } catch (e) {
-      console.log("Could not decode payment header:", e);
-    }
-  }
-
-  const result = await httpServer.processHTTPRequest(context, undefined);
-  console.log("processHTTPRequest result type:", result.type);
+  const result = await handlePaymentRequest(core, httpServer, adapter);
 
   switch (result.type) {
-    case "no-payment-required": {
-      console.log("No payment required, fetching upstream");
-      const response = await fetch(c.req.raw);
-      logVisitEvent(c, response);
-      return response;
-    }
+    case "no-payment-required":
+      return fetch(c.req.raw);
 
-    case "payment-error": {
-      console.log("Payment error, returning paywall");
-      const response = handlePaymentError(c, result.response);
-      logVisitEvent(c, response);
-      return response;
-    }
-
-    case "payment-verified": {
-      console.log("=== PAYMENT VERIFIED ===");
-      const { paymentPayload, paymentRequirements } = result;
-      console.log("paymentPayload:", JSON.stringify(paymentPayload, null, 2));
-      console.log("paymentRequirements:", JSON.stringify(paymentRequirements, null, 2));
-
-      const upstreamResponse = await fetch(c.req.raw);
-      const response = new Response(upstreamResponse.body, {
-        status: upstreamResponse.status,
-        statusText: upstreamResponse.statusText,
-        headers: new Headers(upstreamResponse.headers),
+    case "payment-error":
+      return new Response(result.response.body as string, {
+        status: result.response.status,
+        headers: result.response.headers,
       });
 
-      const settledResponse = await handleSettlement(
-        c,
-        httpServer,
-        paymentPayload,
-        paymentRequirements,
-        response
-      );
-      logVisitEvent(c, settledResponse);
-      return settledResponse;
-    }
+    case "payment-verified": {
+      const upstream = await fetch(c.req.raw);
 
-    default: {
-      console.log("Unknown result type, fetching upstream");
-      return await fetch(c.req.raw);
+      const settlement = await handleSettlement(
+        core,
+        httpServer,
+        adapter,
+        result.paymentPayload,
+        result.paymentRequirements,
+        upstream.status,
+      );
+
+      if (!settlement.success) {
+        return new Response(
+          JSON.stringify({
+            error: "Settlement failed",
+            details: settlement.errorReason,
+          }),
+          {
+            status: 402,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      const response = new Response(upstream.body, {
+        status: upstream.status,
+        statusText: upstream.statusText,
+        headers: new Headers(upstream.headers),
+      });
+      for (const [key, value] of Object.entries(settlement.headers)) {
+        response.headers.set(key, value);
+      }
+      return response;
     }
   }
 }
 
-export function paymentHandler(c: Context<{ Bindings: Env }>): Promise<Response> {
+export function paymentHandler(
+  c: Context<{ Bindings: Env }>,
+): Promise<Response> {
   return wrappedPaymentHandler(
     {
       request: c.req.raw,
       context: c.executionCtx,
     },
-    () => paymentHandlerHelper(c)
+    () => paymentHandlerHelper(c),
   );
 }

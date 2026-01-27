@@ -1,8 +1,15 @@
-import { HTTPAdapter } from "@x402/core/server";
+import type { RequestAdapter } from "@foldset/core";
 import { Context } from "hono";
 
-export class HonoAdapter implements HTTPAdapter {
+export class HonoAdapter implements RequestAdapter {
   constructor(private c: Context) {}
+
+  getIpAddress(): string | null {
+    const header =
+      this.c.req.header("cf-connecting-ip") ||
+      this.c.req.header("x-forwarded-for");
+    return header?.split(",")[0]?.trim() || null;
+  }
 
   getHeader(name: string): string | undefined {
     return this.c.req.header(name);
