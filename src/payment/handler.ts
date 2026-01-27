@@ -79,37 +79,57 @@ async function paymentHandlerHelper(c: Context<{ Bindings: Env }>): Promise<Resp
     return await fetch(c.req.raw);
   }
 
-  const result = await httpServer.processHTTPRequest(context);
+  console.log("=== CLOUDFLARE PAYMENT HANDLER ===");
+  console.log("Path:", c.req.path);
+  console.log("Has payment header:", !!context.paymentHeader);
 
-  if (result.type === "no-payment-required") {
-    const response = await fetch(c.req.raw);
-    logVisitEvent(c, response);
-    return response;
+  const result = await httpServer.processHTTPRequest(context, undefined);
+  console.log("processHTTPRequest result type:", result.type);
+
+  switch (result.type) {
+    case "no-payment-required": {
+      console.log("No payment required, fetching upstream");
+      const response = await fetch(c.req.raw);
+      logVisitEvent(c, response);
+      return response;
+    }
+
+    case "payment-error": {
+      console.log("Payment error, returning paywall");
+      const response = handlePaymentError(c, result.response);
+      logVisitEvent(c, response);
+      return response;
+    }
+
+    case "payment-verified": {
+      console.log("=== PAYMENT VERIFIED ===");
+      const { paymentPayload, paymentRequirements } = result;
+      console.log("paymentPayload:", JSON.stringify(paymentPayload, null, 2));
+      console.log("paymentRequirements:", JSON.stringify(paymentRequirements, null, 2));
+
+      const upstreamResponse = await fetch(c.req.raw);
+      const response = new Response(upstreamResponse.body, {
+        status: upstreamResponse.status,
+        statusText: upstreamResponse.statusText,
+        headers: new Headers(upstreamResponse.headers),
+      });
+
+      const settledResponse = await handleSettlement(
+        c,
+        httpServer,
+        paymentPayload,
+        paymentRequirements,
+        response
+      );
+      logVisitEvent(c, settledResponse);
+      return settledResponse;
+    }
+
+    default: {
+      console.log("Unknown result type, fetching upstream");
+      return await fetch(c.req.raw);
+    }
   }
-
-  if (result.type === "payment-error") {
-    const response = handlePaymentError(c, result.response);
-    logVisitEvent(c, response);
-    return response;
-  }
-
-  const { paymentPayload, paymentRequirements } = result;
-  const upstreamResponse = await fetch(c.req.raw);
-  const response = new Response(upstreamResponse.body, {
-    status: upstreamResponse.status,
-    statusText: upstreamResponse.statusText,
-    headers: new Headers(upstreamResponse.headers),
-  });
-
-  const settledResponse = await handleSettlement(
-    c,
-    httpServer,
-    paymentPayload,
-    paymentRequirements,
-    response
-  );
-  logVisitEvent(c, settledResponse);
-  return settledResponse;
 }
 
 export function paymentHandler(c: Context<{ Bindings: Env }>): Promise<Response> {
