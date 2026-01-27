@@ -24,19 +24,28 @@ export async function handleSettlement(
 
   try {
     console.log("Calling processSettlement...");
+    console.log("httpServer exists:", !!httpServer);
+    console.log("httpServer.processSettlement exists:", typeof httpServer.processSettlement);
+
     const settleResult = await httpServer.processSettlement(
       paymentPayload,
       paymentRequirements
     );
 
-    console.log("Settlement result:", {
-      success: settleResult.success,
-      errorReason: settleResult.success ? undefined : settleResult.errorReason,
-      headers: settleResult.success ? settleResult.headers : undefined,
-    });
+    // Log the FULL settle result object
+    console.log("=== FULL SETTLE RESULT ===");
+    console.log("settleResult (raw):", settleResult);
+    console.log("settleResult (stringified):", JSON.stringify(settleResult, null, 2));
+    console.log("settleResult.success:", settleResult.success);
+    if (!settleResult.success) {
+      console.log("settleResult.errorReason:", settleResult.errorReason);
+      console.log("All settleResult keys:", Object.keys(settleResult));
+    }
 
     if (!settleResult.success) {
-      console.error("Settlement failed:", settleResult.errorReason);
+      console.error("=== SETTLEMENT FAILED ===");
+      console.error("Error reason:", settleResult.errorReason);
+      console.error("Full error object:", JSON.stringify(settleResult, null, 2));
       Sentry.captureException(new Error(`Settlement failed: ${settleResult.errorReason}`));
       return c.json(
         {
