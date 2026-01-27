@@ -82,6 +82,17 @@ async function paymentHandlerHelper(c: Context<{ Bindings: Env }>): Promise<Resp
   console.log("=== CLOUDFLARE PAYMENT HANDLER ===");
   console.log("Path:", c.req.path);
   console.log("Has payment header:", !!context.paymentHeader);
+  console.log("Raw payment header:", context.paymentHeader);
+
+  // Decode and log the payment header content
+  if (context.paymentHeader) {
+    try {
+      const decoded = JSON.parse(atob(context.paymentHeader));
+      console.log("Decoded payment header:", JSON.stringify(decoded, null, 2));
+    } catch (e) {
+      console.log("Could not decode payment header:", e);
+    }
+  }
 
   const result = await httpServer.processHTTPRequest(context, undefined);
   console.log("processHTTPRequest result type:", result.type);
