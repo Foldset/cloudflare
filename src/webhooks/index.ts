@@ -24,6 +24,7 @@ export async function handleWebhook(c: Context<{ Bindings: Env }>): Promise<Resp
   const webhook = JSON.parse(body) as FoldsetWebhook;
 
   // Fails the entire webhook if the put fails. Not standard but think it makes sense for now
+  // TODO rfradkin: should throw some error if webhook even type does match. Or should do something idk
   if (webhook.event_type === "restrictions") {
     await storeRestrictions(c, webhook.event_object as Restriction[]);
   } else if (webhook.event_type === "payment-methods") {

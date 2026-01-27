@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/cloudflare";
 import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
-import type { x402HTTPResourceServer } from "@x402/hono";
+import type { x402HTTPResourceServer } from "@x402/core/server";
 import type { Context } from "hono";
 
 import type { Env } from "../types";

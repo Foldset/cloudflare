@@ -38,7 +38,9 @@ function handlePaymentError(
   // For now, we will return 200 errors while blocking the content even though 
   // we should be returning response.status as 402 here 
   // We also provide the headers and html to everyone, regardless of web browser status
-  return c.html(response.body as string, response.status as 200);
+
+  // ok just 402 for now
+  return c.html(response.body as string, response.status as 402);
   // if (response.isHtml) {
   //   return c.html(response.body as string, response.status as 402));
   // }

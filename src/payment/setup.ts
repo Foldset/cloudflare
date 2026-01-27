@@ -2,8 +2,9 @@ import type { Context } from "hono";
 import {
   x402ResourceServer,
   x402HTTPResourceServer,
-} from "@x402/hono";
-import type { PaywallProvider, PaywallConfig, PaymentRequired } from "@x402/hono";
+} from "@x402/core/server";
+import type { PaywallProvider, PaywallConfig } from "@x402/core/server";
+import type { PaymentRequired } from "@x402/core/types";
 import { registerExactEvmScheme } from "@x402/evm/exact/server";
 import { registerExactSvmScheme } from "@x402/svm/exact/server";
 import type { UnpaidResponseResult, HTTPResponseInstructions } from "@x402/core/http";
