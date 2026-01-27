@@ -59,8 +59,10 @@ function createFoldsetHTTPResponse(
   // const body = unpaidResponse ? unpaidResponse.body : {};
 
   // Status should be 402 but we return 200 so AI crawlers view the payment instructions
+
+  // ok just 402 whatever
   return {
-    status: 200,
+    status: 402,
     headers: {
       "Content-Type": "text/html",
       ...response.headers,
