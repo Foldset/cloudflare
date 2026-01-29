@@ -27,6 +27,10 @@ export class HonoAdapter implements RequestAdapter {
     return this.c.req.url;
   }
 
+  getHost(): string {
+    return new URL(this.c.req.url).hostname;
+  }
+
   getAcceptHeader(): string {
     return this.c.req.header("Accept") || "";
   }
