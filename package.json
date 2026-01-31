@@ -21,6 +21,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "bundle": "node esbuild.bundle.mjs",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "prepare": "npm run build"
@@ -41,6 +42,7 @@
     "eslint": "^9.20.0",
     "eslint-config-prettier": "^10.1.0",
     "hono": "^4.11.4",
+    "esbuild": "^0.25.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.25.0"
   }
